@@ -1,5 +1,7 @@
 package com.mycompany.poc.productapi.exceptions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.fge.jsonpatch.JsonPatchException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -61,6 +63,30 @@ public class GlobalExceptionHandler {
                 .toList();
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .errors(errors)
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({JsonPatchException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleJSONpatchException(JsonPatchException ex) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .stackTrace(ex.getStackTrace())
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return new ResponseEntity<>(errorResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({JsonProcessingException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleJSONParsingErrors(JsonProcessingException ex) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .stackTrace(ex.getStackTrace())
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .build();
 

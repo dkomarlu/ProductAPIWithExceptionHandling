@@ -1,6 +1,11 @@
 package com.mycompany.poc.productapi.controller;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.mycompany.poc.productapi.dto.Product;
 import com.mycompany.poc.productapi.service.ProductService;
 import jakarta.validation.Valid;
@@ -17,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
+    private final ObjectMapper objectMapper;
 
     //Get all Products
     @GetMapping
@@ -45,10 +51,25 @@ public class ProductController {
         return new ResponseEntity<>(newProduct, HttpStatus.ACCEPTED);
     }
 
+    @PatchMapping(path = "/{id}", consumes = "application/json-patch+json")
+    public ResponseEntity<Product> patchProduct(@RequestBody JsonPatch patch, @PathVariable Long id) throws JsonPatchException, JsonProcessingException  {
+        Product exisitngProduct = productService.findProduct(id);
+        Product patchedProduct = applyPatchToProduct(patch, exisitngProduct);
+        patchedProduct = productService.updateProduct(patchedProduct, id);
+        return new ResponseEntity<>(patchedProduct, HttpStatus.ACCEPTED);
+    }
+
     //Delete a Product
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return new ResponseEntity<>("Product is delete.", HttpStatus.OK);
     }
+
+    private Product applyPatchToProduct(
+            JsonPatch patch, Product targetProduct) throws JsonPatchException, JsonProcessingException {
+        JsonNode patched = patch.apply(objectMapper.convertValue(targetProduct, JsonNode.class));
+        return objectMapper.treeToValue(patched, Product.class);
+    }
+
 }

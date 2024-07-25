@@ -18,6 +18,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
 
+
     public List<Product> getProducts() {
         List<ProductEntity> productEntities = productRepository.findAll();
         return productEntities
@@ -58,5 +59,10 @@ public class ProductService {
     public void deleteProduct(Long id) {
         ProductEntity productEntity = productRepository.findById(id).orElseThrow(() ->new ProductNotFoundException(id));
         productRepository.delete(productEntity);
+    }
+
+    public Product findProduct(Long id) {
+        ProductEntity pe = productRepository.findById(id).orElseThrow(ProductNotFoundException::new);
+        return modelMapper.map(pe, Product.class);
     }
 }
